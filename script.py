@@ -4,6 +4,8 @@ import datetime
 from packaging.version import Version
 import sys
 
+from config import *
+
 def create_database(end, last_date, keyword_string):
     end = datetime.datetime.now()
     start = end - datetime.timedelta(days=30)
@@ -11,10 +13,11 @@ def create_database(end, last_date, keyword_string):
     cpes = []
     while(start > last_date):
         print("in loop")
-        cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = 'da031268-411b-4cfb-9e67-0f5b5d949299', lastModStartDate=start, lastModEndDate=end))
+        cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=start, lastModEndDate=end))
         start -= datetime.timedelta(days=30)
         end -= datetime.timedelta(days=30) 
-    cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = 'da031268-411b-4cfb-9e67-0f5b5d949299', lastModStartDate=last_date, lastModEndDate=end))
+    cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=last_date, lastModEndDate=end))
+    current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cpes = set(cpes)
     print(len(cpes))
     cves = {}
@@ -42,29 +45,32 @@ def create_database(end, last_date, keyword_string):
                 if version:
                     cves[cve.id].append(version)
     print(list(cves.items()))
-    create_database_mysql(cves)
-
-    #for k,v in cves.items():
+    create_database_mysql(cves, current_time)
 
 
-def create_database_mysql(cves):
-    conn = mysql.connector.connect(user='root', password='cool1234', host='localhost', 
-    port='3306',database='cve')
+
+def create_database_mysql(cves, current_time,tableName):
+    conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
+    port=MYSQL_PORT,database=MYSQL_DATABASE)
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE Cves (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
+    cursor.execute("CREATE TABLE " +  tableName + " (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
     for k,v in cves.items():
         if len(v) == 0:
-            sql = "INSERT INTO Cves (ID) VALUES (%s)"
+            sql = "INSERT INTO " + tableName + " (ID) VALUES (%s)"
             val = k
             cursor.execute(sql, val)
         else:
             v.sort()
-            versions = str(v[0]) + ", " + str(v[-1])
+            versions = str(v[0]) + "-" + str(v[-1])
             print(versions)
-            sql = "INSERT INTO Cves (ID, Version) VALUES (%s, %s)"
+            sql = "INSERT INTO " + tableName + " (ID, Version) VALUES (%s, %s)"
             val = (k, versions)
             cursor.execute(sql, val)
             conn.commit()
+        sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
+        val = [current_time]
+        cursor.execute(sql, val)
+        conn.commit()
     conn.close()
 
 def containsDigit(version):
