@@ -1,0 +1,14 @@
+https://www.w3schools.com/python/python_mysql_getstarted.asp
+https://dev.mysql.com/doc/refman/8.4/en/primary-key-optimization.html
+https://packaging.pypa.io/en/latest/index.html
+https://www.w3schools.com/python/gloss_python_join_lists.asp
+https://github.com/vehemont/nvdlib
+https://dev.mysql.com/doc
+https://pypi.org/project/nvdlib//
+https://isc.sans.edu/diary/Using+the+NIST+Database+and+API+to+Keep+Up+with+Vulnerabilities+and+Patches+Part+1+of+3/26958
+https://nvd.nist.gov/developers/api-workflows
+https://nvd.nist.gov/developers/start-here
+https://www.w3schools.com/python/python_mysql_create_db.asp
+https://www.geeksforgeeks.org/how-to-install-mysql-on-macos/
+https://dev.mysql.com/doc/connector-python/en/connector-python-installation.html
+https://dev.mysql.com/doc/connector-python/en/connector-python-examples.html
