@@ -2,6 +2,7 @@
 https://dev.mysql.com/doc
 https://stackoverflow.com/questions/19208856/mysql-should-i-stay-connected-or-connect-when-needed
 https://dev.mysql.com/doc/refman/8.4/en/primary-key-optimization.html
+https://www.w3schools.com/python/python_mysql_select.asp
 
 2)NVDLIB Python Library Documenation 
 https://github.com/vehemont/nvdlib
