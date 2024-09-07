@@ -5,7 +5,7 @@ This product uses data from the NVD API but is not endorsed or certified by the 
 ## Prerequisites: 
 1) Make sure you have [mysql installed](https://www.mysql.com/downloads/) and create a database. Instructions for [MacOs](https://www.geeksforgeeks.org/how-to-install-mysql-on-macos/)
 2) Make sure to run `pip install requirements.txt`
-3) Make sure to update the config.py file with all your mqsql database/server details
+3) Make sure to update the config.py file with all your mqsql database/server details. You need a NIST API Key [here](https://nvd.nist.gov/developers/request-an-api-key)
 
 ## How To Use
 Call the script as such: `/path/to/python3/ script.py create` to create the database OR `/path/to/python3/ script.py update` to update it
