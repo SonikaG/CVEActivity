@@ -13,7 +13,7 @@ https://isc.sans.edu/diary/Using+the+NIST+Database+and+API+to+Keep+Up+with+Vulne
 https://nvd.nist.gov/developers/api-workflows
 https://nvd.nist.gov/developers/start-here
 
-4)Pyhon and MYSQL connector documentaion
+4)Python MYSQL connector documentaion
 https://www.geeksforgeeks.org/how-to-install-mysql-on-macos/
 https://dev.mysql.com/doc/connector-python/en/connector-python-installation.html
 https://dev.mysql.com/doc/connector-python/en/connector-python-examples.html
@@ -26,7 +26,7 @@ https://packaging.pypa.io/en/latest/index.html
 6)Some Python Help Documentaion 
 https://www.w3schools.com/python/gloss_python_join_lists.asp
 
-7)arguement parser
+7)Argument parser 
 https://docs.python.org/3/library/argparse.html
 https://stackoverflow.com/questions/8259001/python-argparse-command-line-flags-without-arguments
 
