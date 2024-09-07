@@ -6,20 +6,19 @@ import sys
 
 from config import *
 
-def create_database(end, last_date, keyword_string):
-    end = datetime.datetime.now()
-    start = end - datetime.timedelta(days=30)
-    last_date = datetime.datetime(2023, 1, 1)
+def queryCPES(end, last_date, keyword_string, delta):
+    start = end - delta
     cpes = []
     while(start > last_date):
         print("in loop")
         cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=start, lastModEndDate=end))
-        start -= datetime.timedelta(days=30)
-        end -= datetime.timedelta(days=30) 
+        start -= delta
+        end -= delta
     cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=last_date, lastModEndDate=end))
-    current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cpes = set(cpes)
-    print(len(cpes))
+    return cpes
+
+def queryCVES(cpes):
     cves = {}
     for cpe in cpes: 
         #print(cpe.cpeName)
@@ -29,7 +28,6 @@ def create_database(end, last_date, keyword_string):
             version = Version(version)
         else:
             version = None
-        timestamp = cpe.lastModified
         results = set(nvdlib.searchCVE(cpeName = cpe.cpeName))
         for cve in results: 
             if cve.id not in cves: 
@@ -45,45 +43,61 @@ def create_database(end, last_date, keyword_string):
                 if version:
                     cves[cve.id].append(version)
     print(list(cves.items()))
-    create_database_mysql(cves, current_time)
+    return cves
 
 
+def create_database(end, last_date, keyword_string):
+    cpes = queryCPES(end, last_date, keyword_string, datetime.timedelta(days=30))
+    return queryCVES(cpes)
 
-def create_database_mysql(cves, current_time,tableName):
+def insert_values_mysql(tableName, cves):
     conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
     port=MYSQL_PORT,database=MYSQL_DATABASE)
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE " +  tableName + " (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
     for k,v in cves.items():
         if len(v) == 0:
-            sql = "INSERT INTO " + tableName + " (ID) VALUES (%s)"
-            val = k
+            sql = "INSERT INTO " + tableName + " (ID) VALUES (%s);"
+            val = [k]
             cursor.execute(sql, val)
+            conn.commit()
         else:
             v.sort()
             versions = str(v[0]) + "-" + str(v[-1])
-            print(versions)
+            #print(versions)
             sql = "INSERT INTO " + tableName + " (ID, Version) VALUES (%s, %s)"
             val = (k, versions)
             cursor.execute(sql, val)
             conn.commit()
-        sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
-        val = [current_time]
-        cursor.execute(sql, val)
-        conn.commit()
+    conn.close()
+
+def create_database_mysql(tableName, current_time):
+    conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
+    port=MYSQL_PORT,database=MYSQL_DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS " +  tableName + " (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
+    sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
+    val = [current_time]
+    cursor.execute(sql, val)
+    conn.commit()
     conn.close()
 
 def containsDigit(version):
     return any(char.isdigit() for char in version)
 
+
+
 # Defining main function
 def main():
     print("here")
-    #create_database()
     end = datetime.datetime.now()
+    end = datetime.datetime(2023, 2, 28)
+    current_time = end.strftime('%Y-%m-%d %H:%M:%S')
     last_date = datetime.datetime(2023, 1, 1)
     keyword_string = 'java-merge-sort'
-    create_database(end, last_date, keyword_string)
+    cves = create_database(end, last_date, keyword_string)
+    create_database_mysql('cve', current_time)
+    insert_values_mysql('cve', cves)
+
 
 
 
