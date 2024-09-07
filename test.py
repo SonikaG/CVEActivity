@@ -11,9 +11,11 @@ def test_mysql1():
     answer = result[0]
     assert(answer[0] == "key1")
     assert(answer[1] == "0.0.5-1.0.3")
-    assert(str(answer[2]) == current_time)
+    time = getRows('Meta')[0][1]
+    assert(str(time) == current_time)
     print("TEST ONE PASSED")
     drop_table('testDB')
+    drop_table('Meta')
 
 def test_mysql2():
     cves = {"key1": [Version("1.0.0"), Version("1.0.3")] }
@@ -24,9 +26,12 @@ def test_mysql2():
     answer = result[0]
     assert(answer[0] == "key1")
     assert(answer[1] == "1.0.0-1.0.3")
-    assert(str(answer[2]) == current_time)
+    time = getRows('Meta')[0][1]
+    assert(str(time) == current_time)
     print("TEST TWO PASSED")
     drop_table('testDB')
+    drop_table('Meta')
+
 
 def test_mysql3():
     cves = {"key1": [] }
@@ -37,9 +42,12 @@ def test_mysql3():
     answer = result[0]
     assert(answer[0] == "key1")
     assert(answer[1] == None)
-    assert(str(answer[2]) == current_time)
+    time = getRows('Meta')[0][1]
+    assert(str(time) == current_time)
     print("TEST THREE PASSED")
     drop_table('testDB')
+    drop_table('Meta')
+
 
 def test_mysql4():
     cves = {"key1": [Version("1.0.0"), Version("1.0.3")] }

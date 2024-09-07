@@ -142,9 +142,11 @@ def create_database_mysql(tableName, current_time):
     port=MYSQL_PORT,database=MYSQL_DATABASE)
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS " +  tableName + " (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
-    #cursor.execute("CREATE TABLE IF NOT EXISTS Meta (Tablename varchar(255), lastUpdated TIMESTAMP);")
-    sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
-    val = [current_time]
+    cursor.execute("CREATE TABLE IF NOT EXISTS Meta (Tablename varchar(255), lastUpdated TIMESTAMP);")
+    sql = ("INSERT INTO Meta (Tablename, lastUpdated) VALUES (%s, %s)")
+    val = [tableName, current_time]
+    #sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
+    #val = [current_time]
     cursor.execute(sql, val)
     conn.commit()
     conn.close()
@@ -153,7 +155,7 @@ def get_latest_timestamp_mysql(tableName):
     conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
     port=MYSQL_PORT,database=MYSQL_DATABASE)
     cursor = conn.cursor()
-    cursor.execute("SELECT lastUpdated FROM " + tableName + " ORDER BY lastUpdated DESC LIMIT 1")
+    cursor.execute("SELECT lastUpdated FROM Meta WHERE Tablename = '" + tableName + "'" )
     result = cursor.fetchall()
     return result[0][0]
 
