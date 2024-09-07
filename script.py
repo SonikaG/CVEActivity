@@ -17,13 +17,11 @@ def queryCPES(end, last_date, keyword_string, delta):
     start = end - delta
     cpes = []
     while(start > last_date):
-        print("first loop")
         cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=start, lastModEndDate=end))
         start -= delta
         end -= delta
     cpes += (nvdlib.searchCPE(keywordSearch = keyword_string, key = NIST_API_KEY, lastModStartDate=last_date, lastModEndDate=end))
     cpes = set(cpes)
-    print(len(cpes))
     return cpes
 
 '''
@@ -33,7 +31,6 @@ param1: cpes that we should search for cves from
 def queryCVES(cpes):
     cves = {}
     for cpe in cpes: 
-        print("second loop")
         version = cpe.cpeName.split(":")[5]
         try:
             version = Version(version)
@@ -59,8 +56,7 @@ param1: keyword string we are searching for in cves
 param2: name of our cve table 
 '''
 def create_database(keyword_string, tableName):
-    #end = datetime.datetime.now()
-    end = datetime.datetime(2023, 2, 28)
+    end = datetime.datetime.now()
     current_time = end.strftime('%Y-%m-%d %H:%M:%S')
     last_date = datetime.datetime(2023, 1, 1)
     cpes = queryCPES(end, last_date, keyword_string, datetime.timedelta(days=30))
@@ -81,6 +77,7 @@ param1: keyword string we are searching for in cves
 param2: name of our cve table 
 '''
 def update_database(keyword_string, tableName):
+    #TODO: currenlty if you call update_database wihout create, it errors out with a random table error ideally we would check and return something useful
     #we need the last time we ran a cve query so we don't query this time for data we already have
     last_date = get_latest_timestamp_mysql(tableName)
     end = datetime.datetime.now()
@@ -223,8 +220,7 @@ def drop_table(tableName):
     conn.close()
 
 def main():
-    print("here")
-    keyword_string = 'java-merge-sort'
+    keyword_string = 'java'
     tableName = 'cve'
     #from here: https://stackoverflow.com/questions/8259001/python-argparse-command-line-flags-without-arguments
     parser = argparse.ArgumentParser(description='create or update nist database with java packages')
