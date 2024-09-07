@@ -25,5 +25,9 @@ https://packaging.pypa.io/en/latest/index.html
 6)Some Python Help Documentaion 
 https://www.w3schools.com/python/gloss_python_join_lists.asp
 
+7)arguement parser
+https://docs.python.org/3/library/argparse.html
+https://stackoverflow.com/questions/8259001/python-argparse-command-line-flags-without-arguments
+
 
 
