@@ -24,9 +24,9 @@ def queryCVES(cpes):
         #print(cpe.cpeName)
         print("in second loop")
         version = cpe.cpeName.split(":")[5]
-        if (containsDigit(version)):
+        try:
             version = Version(version)
-        else:
+        except:
             version = None
         results = set(nvdlib.searchCVE(cpeName = cpe.cpeName))
         for cve in results: 
@@ -45,10 +45,75 @@ def queryCVES(cpes):
     print(list(cves.items()))
     return cves
 
-
-def create_database(end, last_date, keyword_string):
+def create_database(keyword_string, tableName):
+    end = datetime.datetime.now()
+    end = datetime.datetime(2023, 2, 28)
+    current_time = end.strftime('%Y-%m-%d %H:%M:%S')
+    last_date = datetime.datetime(2023, 1, 1)
     cpes = queryCPES(end, last_date, keyword_string, datetime.timedelta(days=30))
-    return queryCVES(cpes)
+    cves = queryCVES(cpes)
+    create_database_mysql(tableName, current_time)
+    insert_values_mysql(tableName, cves)
+
+def update_database(keyword_string, tableName):
+     last_date = get_latest_timestamp_mysql(tableName)
+     end = datetime.datetime.now()
+     cpes = queryCPES(end, last_date, keyword_string, datetime.timedelta(days=30))
+     cves =  queryCVES(cpes)  
+
+def update_values_mysql(tableName, cves):
+    #for id in cve:  
+        #result = get_row_for_id(tableName, id)
+        #if result > 0 (does not already exist)
+            #if len(v)>0:
+                #update version
+        #else
+            #add to insert values
+    #call insert 
+    #update lastUpdated
+    
+    conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
+    port=MYSQL_PORT,database=MYSQL_DATABASE)
+    cursor = conn.cursor()
+    cves_to_insert = {}
+    for k,v in cves.items():
+        #check if we have the row already
+        version = get_row_for_id(k)
+        #if this row exists in database
+        if len(version) > 0:
+            #if we can update version number
+            if len(v) > 0:
+                v.sort()
+                old_version = version.split("-")
+                new_version = ""
+                if v[0] < old_version[0]:
+                    new_version += v[0]
+                else:
+                    new_version += old_version[0]
+                new_version += "-"
+                if v[-1] > old_version[1]:
+                    new_version += v[-1]
+                else:
+                    new_version += old_version[1]
+                sql = "UPDATE " + tableName + " SET Version = %s"
+                val = [new_version]
+                cursor.execute(sql, val)  
+        #we need to insert new values
+        else:
+            cves_to_insert[k] = v
+    insert_values_mysql(tableName, cves_to_insert)
+    conn.commit()
+    conn.close()
+
+def get_row_for_id(tableName, id):
+    conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
+    port=MYSQL_PORT,database=MYSQL_DATABASE)
+    cursor = conn.cursor()
+    sql = "SELECT Version FROM " + tableName + " WHERE ID = %s"
+    val = [id]
+    cursor.execute(sql,val)
+    result = cursor.fetchall()
+    return result[0][0]    
 
 def insert_values_mysql(tableName, cves):
     conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
@@ -67,7 +132,9 @@ def insert_values_mysql(tableName, cves):
             sql = "INSERT INTO " + tableName + " (ID, Version) VALUES (%s, %s)"
             val = (k, versions)
             cursor.execute(sql, val)
-            conn.commit()
+    #all or nothing commit -- not the most efficient but it's there to prevent errors for now
+    #in the next iteration, ideally it would be batch committed so progress isn't lost 
+    conn.commit()
     conn.close()
 
 def create_database_mysql(tableName, current_time):
@@ -75,11 +142,21 @@ def create_database_mysql(tableName, current_time):
     port=MYSQL_PORT,database=MYSQL_DATABASE)
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS " +  tableName + " (ID varchar(255) NOT NULL, Version varchar(255), PRIMARY KEY (ID));")
+    #cursor.execute("CREATE TABLE IF NOT EXISTS Meta (Tablename varchar(255), lastUpdated TIMESTAMP);")
     sql = "ALTER TABLE `{table}` ADD `lastUpdated` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT %s ;".format(table=tableName)
     val = [current_time]
     cursor.execute(sql, val)
     conn.commit()
     conn.close()
+
+def get_latest_timestamp_mysql(tableName):
+    conn = mysql.connector.connect(user=MYSQL_SERVER, password=MYSQL_PASS, host=MYSQL_HOST, 
+    port=MYSQL_PORT,database=MYSQL_DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT lastUpdated FROM " + tableName + " ORDER BY lastUpdated DESC LIMIT 1")
+    result = cursor.fetchall()
+    return result[0][0]
+
 
 def containsDigit(version):
     return any(char.isdigit() for char in version)
@@ -89,14 +166,15 @@ def containsDigit(version):
 # Defining main function
 def main():
     print("here")
-    end = datetime.datetime.now()
+    '''end = datetime.datetime.now()
     end = datetime.datetime(2023, 2, 28)
     current_time = end.strftime('%Y-%m-%d %H:%M:%S')
-    last_date = datetime.datetime(2023, 1, 1)
+    last_date = datetime.datetime(2023, 1, 1)'''
     keyword_string = 'java-merge-sort'
-    cves = create_database(end, last_date, keyword_string)
-    create_database_mysql('cve', current_time)
-    insert_values_mysql('cve', cves)
+    tableName = 'cve'
+    create_database(keyword_string, tableName)
+    '''create_database_mysql('cve', current_time)
+    insert_values_mysql('cve', cves)'''
 
 
 
